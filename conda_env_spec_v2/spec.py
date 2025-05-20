@@ -101,6 +101,39 @@ class EnvironmentSpec(BaseModel):
 
         return yaml.dumps(conda_deps + [{"pip": pypi_deps}])
 
+    def _solve_pending(
+        self,
+        conda_deps: list[Requirement],
+        pypi_deps: list[Requirement],
+    ) -> tuple(list[Requirement], list[Requirement]):
+        conda_resolved, conda_conditional = self._split_pending(conda_deps)
+        pypi_resolved, pypi_conditional = self._split_pending(conda_deps)
+
+        conditionals = {
+            **{dep.then: dep for dep in conda_conditional},
+            **{dep.then: dep for dep in pypi_conditional},
+        }
+
+        unresolved = []
+        for dep in conda_conditional:
+            if dep._if in conda_resolved:
+                conda_resolved.append(dep.then)
+            else:
+                unresolved.append(dep)
+
+    @staticmethod
+    def _split_pending(deps: list[Requirement]) -> tuple(
+        list[str], list[ConditionalRequirement]
+    ):
+        resolved, conditional = [], []
+        for dep in deps:
+            if isinstance(dep, ConditionalRequirement):
+                conditional.append(dep)
+            else:
+                resolved.append(dep)
+
+        return resolved, conditional
+
     @staticmethod
     def _get_pending_requirements(
         requirements: list[Requirement],
