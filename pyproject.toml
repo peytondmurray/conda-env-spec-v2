@@ -26,6 +26,7 @@ dependencies = [
   # "conda >=23.9.0",
   "tomli>=2.0.1;python_version<'3.11'",
   "tomli-w",
+  "pyyaml",
 ]
 dynamic = ["version"]
 
@@ -83,22 +84,22 @@ select = [
     "NPY",
 ]
 ignore = [
-    "D104", # Missing docstring in public package
-    "D100", # Missing docstring in public module
-    "D211", # No blank line before class
-    "D213", # Multiline summary second line
-    "PD901", # Avoid using 'df' for pandas dataframes. Perfectly fine in functions with limited scope
-    "ANN101", # Missing type annotation for `self`
-    "ANN204", # Missing return type annotation for special method
     "ANN002", # Missing type annotation for `*args`
     "ANN003", # Missing type annotation for `**kwargs`
+    "ANN204", # Missing return type annotation for special method
+    "D100", # Missing docstring in public module
+    "D104", # Missing docstring in public package
     "D105", # Missing docstring in magic method
+    "D107", # Missing docstring in __init__
     "D203", # 1 blank line before after class docstring
     "D204", # 1 blank line required after class docstring
-    "D413", # 1 blank line after parameters
-    "SIM108", # Simplify if/else to one line; not always clearer
     "D206", # Advised to disable by ruff-format
+    "D211", # No blank line before class
+    "D213", # Multiline summary second line
+    "D413", # 1 blank line after parameters
     "E501", # Advised to disable by ruff-format
+    "PD901", # Avoid using 'df' for pandas dataframes. Perfectly fine in functions with limited scope
+    "SIM108", # Simplify if/else to one line; not always clearer
     "W191", # Advised to disable by ruff-format
 ]
 

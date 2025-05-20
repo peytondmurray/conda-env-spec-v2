@@ -1,5 +1,5 @@
 package:
-  name: conda-declarative
+  name: conda-env-spec-v2
   {% if GIT_DESCRIBE_TAG is defined and GIT_BUILD_STR is defined %}
   version: {{ GIT_DESCRIBE_TAG }}+{{ GIT_BUILD_STR }}
   {% else %}
@@ -20,8 +20,8 @@ requirements:
   host:
     - python 3.10
     - pip
-    - hatchling >=1.12.2
-    - hatch-vcs >=0.2.0
+    - setuptools
+    - setuptools_scm
   run:
     - python >=3.10
     - conda >=23.9.0
@@ -32,17 +32,11 @@ test:
   requires:
     - python 3.10
   imports:
-    - conda_declarative
-    - conda_declarative.apply
-    - conda_declarative.edit
-    - conda_declarative.cli
-  commands:
-    - conda edit --help
-    - conda apply --help
+    - conda_env_spec_v2
 
 about:
-  home: https://github.com/conda-incubator/conda-declarative
+  home: https://github.com/conda-incubator/conda-env-spec-v2
   license: MIT AND BSD-3-Clause
   license_file: LICENSE
-  summary: Declarative workflows for conda environment handling.
-  dev_url: https://github.com/conda-incubator/conda-declarative
+  summary: A V2 environment specification for conda.
+  dev_url: https://github.com/conda-incubator/conda-env-spec-v2
