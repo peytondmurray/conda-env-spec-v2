@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import pathlib
 import sys
-from collections.abc import Generator
 from typing import Any
 
 import yaml
+from conda.common.compat import on_linux, on_mac, on_win
 from conda.env.env import Environment
 from conda.plugins.types import EnvironmentSpecBase
 from pydantic import BaseModel, Field
@@ -80,84 +80,61 @@ class EnvironmentSpec(BaseModel):
             A yaml-formatted string of dependencies that can be parsed by
             ``conda.env.env.Dependencies``
         """
-        conda_deps, pypi_deps = self.get_group_dependencies(groups)
+        conda_deps, pypi_deps = self._get_group_dependencies(groups)
         conda_deps.extend(self.requirements)
         pypi_deps.extend(self.pypi_requirements)
 
-        mutating = True
-        while mutating:
-            mutating = False
-            for dep_list in (conda_deps, pypi_deps):
-                for dep in self._get_pending_requirements(dep_list[:]):
-                    if dep.name in conda_deps + pypi_deps:
-                        dep_list.append(dep.name)
-                        mutating = True
-
-        if any(self._get_pending_requirements(conda_deps + pypi_deps)):
-            raise ValueError(
-                "Unable to resolve conditional dependencies: "
-                + str(self._get_pending_requirements(conda_deps + pypi_deps))
-            )
+        conda_deps = self._preprocess_conditional_requirements(conda_deps)
+        pypi_deps = self._preprocess_conditional_requirements(pypi_deps)
 
         return yaml.dumps(conda_deps + [{"pip": pypi_deps}])
 
-    def _solve_pending(
-        self,
-        conda_deps: list[Requirement],
-        pypi_deps: list[Requirement],
-    ) -> tuple(list[Requirement], list[Requirement]):
-        conda_resolved, conda_conditional = self._split_pending(conda_deps)
-        pypi_resolved, pypi_conditional = self._split_pending(conda_deps)
-
-        conditionals = {
-            **{dep.then: dep for dep in conda_conditional},
-            **{dep.then: dep for dep in pypi_conditional},
-        }
-
-        unresolved = []
-        for dep in conda_conditional:
-            if dep._if in conda_resolved:
-                conda_resolved.append(dep.then)
-            else:
-                unresolved.append(dep)
-
     @staticmethod
-    def _split_pending(deps: list[Requirement]) -> tuple(
-        list[str], list[ConditionalRequirement]
-    ):
-        resolved, conditional = [], []
-        for dep in deps:
-            if isinstance(dep, ConditionalRequirement):
-                conditional.append(dep)
-            else:
-                resolved.append(dep)
-
-        return resolved, conditional
-
-    @staticmethod
-    def _get_pending_requirements(
+    def _preprocess_conditional_requirements(
         requirements: list[Requirement],
-    ) -> Generator[Requirement, None, None]:
-        """Get a list of ConditionalRequirement objects from the input.
+    ) -> list[str]:
+        """Replace conditional requirements with resolved requirements if applicable.
+
+        Currently only the following virtual packages are allowed in the `if` condition:
+
+            __osx: OSX version if applicable.
+            __linux: Available when running on Linux.
+            __unix: Available when running on OSX or Linux.
+            __win: Available when running on Win.
 
         Parameters
         ----------
         requirements : list[Requirement]
-            A list of Requirement objects to inspect
+            List of requirements to be searched for ConditionalRequirement objects,
+            which should be replaced with resolved requirements
 
         Returns
         -------
-        Generator[Requirement, None, None]
-            The ConditionalRequirement objects from the input
+        list[str]
+            The requirements that were passed in with conditional requirements replaced
+            or removed, as appropriate depending on the system running this function
         """
+        resolved = []
         for req in requirements:
-            if isinstance(req, ConditionalRequirement):
-                yield req
+            if isinstance(req, str):
+                resolved.append(req)
+            else:
+                if (
+                    (req._if == "__win" and on_win)
+                    or (req._if == "__osx" and on_mac)
+                    or (req._if == "__unix" and (on_mac or on_linux))
+                    or (req._if == "__linux" and on_linux)
+                ):
+                    if isinstance(req.then, str):
+                        resolved.append(req.then)
+                    else:
+                        resolved.extend(req.then)
+        return resolved
 
-    def get_group_dependencies(
+    def _get_group_dependencies(
         self,
         groups: str | list[str] | None = None,
-    ) -> list[Requirement]:
+    ) -> tuple[list[Requirement], list[Requirement]]:
         """Get the dependencies of the specified groups.
 
         Parameters
@@ -167,8 +144,9 @@ class EnvironmentSpec(BaseModel):
 
         Returns
         -------
-        list[Requirement]
-            A list of dependencies for the specified group name
+        tuple[list[Requirement], list[Requirement]]
+            Two lists of dependencies from the requested groups: one for conda requirements,
+            the other for pypi requirements
         """
         group_map = {group.name: group for group in self.groups}
 
@@ -176,6 +154,8 @@ class EnvironmentSpec(BaseModel):
         # every single group
         if groups is None:
             groups = list(group_map)
+        elif isinstance(groups, str):
+            groups = [groups]
 
         conda_deps, pypi_deps = [], []
         for group in groups:
@@ -184,8 +164,8 @@ class EnvironmentSpec(BaseModel):
                     f"Group '{group}' is not specified in the {self.name} environment."
                 )
 
-            conda_deps.append(group_map[group].get_conda_reqs())
-            pypi_deps.append(group_map[group].get_pypi_reqs())
+            conda_deps.extend(group_map[group].requirements)
+            pypi_deps.extend(group_map[group].pypi_requirements)
 
         return conda_deps, pypi_deps
 
