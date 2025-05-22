@@ -11,24 +11,23 @@ authors = [
 ]
 license = { file = "LICENSE" }
 classifiers = [
-  "License :: OSI Approved :: BSD License",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
-  "Programming Language :: Python :: Implementation :: PyPy",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
   # "conda >=23.9.0",
-  "tomli>=2.0.1;python_version<'3.11'",
   "tomli-w",
   "pyyaml",
 ]
 dynamic = ["version"]
+
+[tool.setuptools]
+packages = [
+    "conda_env_spec_v2"
+]
 
 [project.urls]
 homepage = "https://github.com/conda-incubator/conda-env-spec-v2"

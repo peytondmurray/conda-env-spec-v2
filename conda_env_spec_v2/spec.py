@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pathlib
-import sys
+from tomllib import load
 from typing import Any
 
 import yaml
@@ -9,11 +9,6 @@ from conda.common.compat import on_linux, on_mac, on_win
 from conda.env.env import Environment
 from conda.plugins.types import EnvironmentSpecBase
 from pydantic import BaseModel, Field
-
-if sys.version_info >= (3, 11):
-    from tomllib import load
-else:
-    from tomli import load
 
 
 class ConditionalRequirement(BaseModel):
@@ -48,7 +43,7 @@ class Group(BaseModel):
     pypi_requirements: list[Requirement]
 
 
-class EnvironmentSpec(BaseModel):
+class EnvironmentFile(BaseModel):
     """An model representing the contents of an environment file."""
 
     name: str = ""
@@ -204,7 +199,7 @@ class EnvSpecV2(EnvironmentSpecBase):
             which implements the spec.
         """
         with open(self.filename, "rb") as file:
-            spec = EnvironmentSpec.model_validate(load(file))
+            spec = EnvironmentFile.model_validate(load(file))
 
         return Environment(
             name=spec.name,

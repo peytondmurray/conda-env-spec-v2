@@ -1,0 +1,45 @@
+name = "test-env-v2"
+description = "This is an v2 env spec"
+platforms = [
+    "linux-64",
+    "osx-64",
+    "win-64",
+]
+requirements = [
+    "python",
+    "numpy",
+    { if = "__win", then = "pywin32" },
+]
+pypi-requirements = [
+    "my-lab-dependency",
+    { if = "__osx", then = "my-lab-dependency-osx" },
+]
+
+[config]
+version = 2
+channels = [
+    "conda-forge",
+]
+channel-priority = "strict"
+repodata-fn = "repodata.json"
+
+[config.variables]
+ENVVAR = "value"
+ENVVAR2 = "value2"
+
+[[groups]]
+group = "py38"
+requirements = [
+    "python=3.8",
+]
+
+[[groups]]
+group = "test"
+requirements = [
+    "pytest",
+    "pytest-cov",
+    { if = "__win", then = "pytest-windows" },
+]
+pypi-requirements = [
+    "some-test-dependency-only-on-pypi",
+]
