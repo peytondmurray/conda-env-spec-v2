@@ -1,7 +1,7 @@
 import pathlib
 import sys
 
-from conda_env_spec_v2 import EnvironmentFile, EnvSpecV2
+from conda_env_spec_v2.spec import EnvironmentFile, EnvSpecV2
 
 if sys.version_info < (3, 11):
     from tomli import loads

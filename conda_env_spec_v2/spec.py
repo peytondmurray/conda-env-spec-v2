@@ -21,12 +21,12 @@ class ConditionalRequirement(BaseModel):
 
     Attributes
     ----------
-    _if : Name of a package; if present, the packages under ``self.then`` are also
+    has : Name of a package; if present, the packages under ``self.then`` are also
         included in the requirements
     then : Packages to conditionally include
     """
 
-    _if: str = Field(alias="if")
+    has: str = Field(alias="if")
     then: str | list[str]
 
 
@@ -120,10 +120,10 @@ class EnvironmentFile(BaseModel):
                 resolved.append(req)
             else:
                 if (
-                    (req._if == "__win" and on_win)
-                    or (req._if == "__osx" and on_mac)
-                    or (req._if == "__unix" and (on_mac or on_linux))
-                    or (req._if == "__linux" and on_linux)
+                    (req.has == "__win" and on_win)
+                    or (req.has == "__osx" and on_mac)
+                    or (req.has == "__unix" and (on_mac or on_linux))
+                    or (req.has == "__linux" and on_linux)
                 ):
                     if isinstance(req.then, str):
                         resolved.append(req.then)
