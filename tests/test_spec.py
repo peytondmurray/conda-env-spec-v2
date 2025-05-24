@@ -1,12 +1,17 @@
 import pathlib
-import tomllib
+import sys
 
 from conda_env_spec_v2 import EnvironmentFile, EnvSpecV2
+
+if sys.version_info < (3, 11):
+    from tomli import loads
+else:
+    from tomllib import loads
 
 
 def test_model(simple_env):
     """Test that the EnvironmentSpec model parses a valid environment spec."""
-    EnvironmentFile.model_validate(tomllib.loads(simple_env))
+    EnvironmentFile.model_validate(loads(simple_env))
 
 
 def test_spec_v2():

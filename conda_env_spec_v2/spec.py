@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pathlib
-from tomllib import load
+import sys
 from typing import Any
 
 import yaml
@@ -9,6 +9,11 @@ from conda.common.compat import on_linux, on_mac, on_win
 from conda.env.env import Environment
 from conda.plugins.types import EnvironmentSpecBase
 from pydantic import BaseModel, Field
+
+if sys.version_info < (3, 11):
+    from tomli import load
+else:
+    from tomllib import load
 
 
 class ConditionalRequirement(BaseModel):
