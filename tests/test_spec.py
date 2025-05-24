@@ -21,19 +21,22 @@ def test_spec_v2():
 
     assert spec.can_handle()
     assert environment.name == "test-env-v2"
-    assert environment.filename == "simple.toml"
+    assert environment.filename.name == "simple.toml"
     assert environment.channels == ["conda-forge"]
-    assert environment.dependencies is None
-    assert environment.prefix is None
-    assert environment.variables == {"ENVVAR": "value", "ENVVAR2": "value2"}
 
-    deps = environment.dependencies
-    conda_deps, pypi_deps = deps["conda"], deps["pip"]
-
-    assert set(conda_deps) == {
-        "python",
-        "numpy",
+    assert set(environment.dependencies["conda"]) == {
+        "python=3.8",
         "pytest",
         "pytest-cov",
+        "python",
+        "numpy",
+        "pip",
     }
-    assert set(pypi_deps) == {"my-lab-dependency", "some-test-dependency-only-on-pypi"}
+    assert set(environment.dependencies["pip"]) == {
+        "my-lab-dependency",
+        "some-test-dependency-only-on-pypi",
+    }
+
+    assert environment.dependencies
+    assert environment.prefix is None
+    assert environment.variables == {"ENVVAR": "value", "ENVVAR2": "value2"}

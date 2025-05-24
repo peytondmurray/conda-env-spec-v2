@@ -10,7 +10,7 @@ requirements = [
     "numpy",
     { if = "__win", then = "pywin32" },
 ]
-pypi-requirements = [
+pypi_requirements = [
     "my-lab-dependency",
     { if = "__osx", then = "my-lab-dependency-osx" },
 ]
@@ -28,18 +28,18 @@ ENVVAR = "value"
 ENVVAR2 = "value2"
 
 [[groups]]
-group = "py38"
+name = "py38"
 requirements = [
     "python=3.8",
 ]
 
 [[groups]]
-group = "test"
+name = "test"
 requirements = [
     "pytest",
     "pytest-cov",
     { if = "__win", then = "pytest-windows" },
 ]
-pypi-requirements = [
+pypi_requirements = [
     "some-test-dependency-only-on-pypi",
 ]

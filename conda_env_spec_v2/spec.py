@@ -4,7 +4,6 @@ import pathlib
 import sys
 from typing import Any
 
-import yaml
 from conda.common.compat import on_linux, on_mac, on_win
 from conda.env.env import Environment
 from conda.plugins.types import EnvironmentSpecBase
@@ -44,8 +43,8 @@ class Group(BaseModel):
     """
 
     name: str
-    requirements: list[Requirement]
-    pypi_requirements: list[Requirement]
+    requirements: list[Requirement] = []
+    pypi_requirements: list[Requirement] = []
 
 
 class EnvironmentFile(BaseModel):
@@ -60,14 +59,15 @@ class EnvironmentFile(BaseModel):
     groups: list[Group] = []
     metadata: dict[str, Any] = {}
 
-    def dump_dependencies(self, groups: str | list[str] | None = None) -> str:
+    def dump_dependencies(
+        self, groups: str | list[str] | None = None
+    ) -> list[str, dict[str, list[str]]]:
         """Dump the dependencies of the environment.
 
         For legacy reasons ``conda.env.env.Dependencies`` has some
         "public" attributes that are accessed in various places of the conda
-        code base. This function dumps the dependencies as a yaml-formatted
-        string which is used by conda to construct a
-        ``conda.env.env.Dependencies``.
+        code base. This function dumps the dependencies as a dict which is used
+        to construct a ``conda.env.env.Dependencies``.
 
         Parameters
         ----------
@@ -76,9 +76,9 @@ class EnvironmentFile(BaseModel):
 
         Returns
         -------
-        str
-            A yaml-formatted string of dependencies that can be parsed by
-            ``conda.env.env.Dependencies``
+        list[str, dict[str, list[str]]]
+            List of conda dependencies; if pypi dependencies are present,
+            include those in a separate mapping.
         """
         conda_deps, pypi_deps = self._get_group_dependencies(groups)
         conda_deps.extend(self.requirements)
@@ -87,7 +87,11 @@ class EnvironmentFile(BaseModel):
         conda_deps = self._preprocess_conditional_requirements(conda_deps)
         pypi_deps = self._preprocess_conditional_requirements(pypi_deps)
 
-        return yaml.dumps(conda_deps + [{"pip": pypi_deps}])
+        if pypi_deps:
+            conda_deps.append("pip")
+            return conda_deps + [{"pip": pypi_deps}]
+
+        return conda_deps
 
     @staticmethod
     def _preprocess_conditional_requirements(
