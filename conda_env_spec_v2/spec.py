@@ -144,7 +144,8 @@ class EnvironmentFile(BaseModel):
         Parameters
         ----------
         groups : str | list[str] | None
-            Name or names of the groups for which dependencies should be returned
+            Name or names of the groups for which dependencies should be returned. If
+            None, don't return any groups
 
         Returns
         -------
@@ -154,10 +155,9 @@ class EnvironmentFile(BaseModel):
         """
         group_map = {group.name: group for group in self.groups}
 
-        # If the user doesn't specify a group, just use the requirements from
-        # every single group
+        # If the user doesn't specify a group, don't include
         if groups is None:
-            groups = list(group_map)
+            groups = []
         elif isinstance(groups, str):
             groups = [groups]
 
@@ -181,6 +181,23 @@ class EnvSpecV2(EnvironmentSpecBase):
 
     def __init__(self, filename: str):
         self.filename = filename
+        self._model = None
+
+    @property
+    def model(self) -> EnvironmentFile:
+        """Get the model that holds the parsed environment file.
+
+        If not parsed, the environment file will be loaded and parsed.
+
+        Returns
+        -------
+        EnvironmentFile
+            Model containing the parsed environment
+        """
+        if not self._model:
+            with open(self.filename, "rb") as file:
+                self._model = EnvironmentFile.model_validate(load(file))
+        return self._model
 
     def can_handle(self) -> bool:
         """Check whether the spec can parse ``self.filename``.
@@ -207,14 +224,11 @@ class EnvSpecV2(EnvironmentSpecBase):
             V2 environment spec. See ``EnvironmentSpec`` for a Pydantic model
             which implements the spec.
         """
-        with open(self.filename, "rb") as file:
-            spec = EnvironmentFile.model_validate(load(file))
-
         return Environment(
-            name=spec.name,
+            name=self.model.name,
             filename=self.filename,
-            channels=spec.config.get("channels"),
-            dependencies=spec.dump_dependencies(),
+            channels=self.model.config.get("channels"),
+            dependencies=self.model.dump_dependencies(),
             prefix=None,
-            variables=spec.config.get("variables"),
+            variables=self.model.config.get("variables"),
         )
